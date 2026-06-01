@@ -1,0 +1,2 @@
+# Rekata
+Aplikasi Cek Similarity
