@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekata - Smart Scientific Paraphrasing</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Pre-load theme script to prevent flash of wrong theme -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 font-sans flex flex-col transition-colors duration-300">
+
+    <!-- Navbar -->
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm sticky top-0 z-10 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="bg-indigo-600 p-2 rounded-lg text-white">
+                    <i data-lucide="book-open-text" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-indigo-900 dark:text-indigo-300 tracking-tight transition-colors">Rekata</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium transition-colors">Smart Scientific Paraphrasing</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex text-sm text-slate-500 dark:text-slate-400 transition-colors">
+                    Perkaya Kosakata &bull; Hindari Plagiarisme &bull; Profesional
+                </div>
+                <!-- Theme Toggle Button -->
+                <button id="themeToggle" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500" title="Ubah Tema">
+                    <i data-lucide="moon" id="themeIconMoon" class="w-5 h-5"></i>
+                    <i data-lucide="sun" id="themeIconSun" class="w-5 h-5 hidden"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
+        
+        <!-- Controls Bar -->
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row items-center gap-4 justify-between transition-colors duration-300">
+            
+            <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                <!-- Tone Selector -->
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <div class="bg-slate-100 dark:bg-slate-700 p-2 rounded-md transition-colors">
+                        <i data-lucide="settings-2" class="w-[18px] h-[18px] text-slate-600 dark:text-slate-300 transition-colors"></i>
+                    </div>
+                    <select id="toneSelect" class="bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5 outline-none transition-colors">
+                        <option value="Academic" selected>Academic Tone</option>
+                        <option value="Professional">Professional Tone</option>
+                        <option value="Formal">Formal Tone</option>
+                        <option value="Creative">Creative Tone</option>
+                        <option value="Simple">Simple Tone</option>
+                        <option value="Short">Short Tone</option>
+                        <option value="Expand">Expand Tone</option>
+                    </select>
+                </div>
+
+                <div class="hidden sm:block text-slate-300 dark:text-slate-600 transition-colors">|</div>
+
+                <!-- Language Selector -->
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <select id="langSelect" class="bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5 outline-none transition-colors">
+                        <option value="Auto Detect" selected>Output: Auto Detect</option>
+                        <option value="Indonesia">Output: Indonesia</option>
+                        <option value="Inggris">Output: Inggris</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <button id="paraphraseBtn" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 dark:disabled:bg-indigo-900/50 disabled:cursor-not-allowed text-white font-medium rounded-lg text-sm px-6 py-3 flex items-center justify-center gap-2 shadow-sm transition-all">
+                <i data-lucide="sparkles" id="btnIconDefault" class="w-[18px] h-[18px]"></i>
+                <i data-lucide="loader-2" id="btnIconLoading" class="w-[18px] h-[18px] animate-spin hidden"></i>
+                <span id="btnText">Parafrase Teks</span>
+            </button>
+        </div>
+
+        <!-- Error Message Container -->
+        <div id="errorContainer" class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg border border-red-200 dark:border-red-800/50 text-sm hidden transition-colors">
+            <!-- Error text will go here -->
+        </div>
+
+        <!-- 2-Column Editors -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-h-[500px]">
+            
+            <!-- Left Column: Original Text -->
+            <div class="flex flex-col bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden relative focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all duration-300">
+                <div class="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex justify-between items-center transition-colors">
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300 transition-colors">Teks Asli</span>
+                    <button id="clearBtn" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1" title="Bersihkan Teks">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <textarea id="inputText" class="flex-grow w-full p-4 resize-none outline-none text-slate-700 dark:text-slate-200 leading-relaxed text-base placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-transparent transition-colors" placeholder="Tempel atau ketik teks artikel ilmiah Anda di sini..."></textarea>
+                <div class="bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 px-4 py-2 text-xs text-slate-500 dark:text-slate-400 text-right transition-colors">
+                    <span id="wordCountIn">0</span> Kata
+                </div>
+            </div>
+
+            <!-- Middle Arrow (Only visible on Desktop) -->
+            <div class="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 translate-y-10 z-10 bg-white dark:bg-slate-800 p-3 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 text-indigo-500 dark:text-indigo-400 transition-colors duration-300">
+                <i data-lucide="arrow-right-left" class="w-6 h-6"></i>
+            </div>
+
+            <!-- Right Column: Paraphrased Text -->
+            <div class="flex flex-col bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden relative transition-colors duration-300">
+                <div class="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex justify-between items-center transition-colors">
+                    <span class="text-sm font-semibold text-indigo-700 dark:text-indigo-400 flex items-center gap-2 transition-colors">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-indigo-500 dark:text-indigo-400"></i>
+                        Hasil Rekata
+                    </span>
+                    <button id="copyBtn" class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md transition-colors bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 disabled:opacity-50 disabled:hover:bg-indigo-50 dark:disabled:hover:bg-indigo-900/30 disabled:cursor-not-allowed">
+                        <i data-lucide="copy" id="copyIconDefault" class="w-3.5 h-3.5"></i>
+                        <i data-lucide="check-circle-2" id="copyIconSuccess" class="w-3.5 h-3.5 hidden"></i>
+                        <span id="copyText">Salin Teks</span>
+                    </button>
+                </div>
+                
+                <div class="flex-grow relative">
+                    <!-- Loading Overlay -->
+                    <div id="loadingOverlay" class="absolute inset-0 bg-white/60 dark:bg-slate-800/70 backdrop-blur-sm flex flex-col items-center justify-center z-10 hidden transition-colors">
+                        <i data-lucide="loader-2" class="w-8 h-8 text-indigo-600 dark:text-indigo-400 animate-spin mb-3"></i>
+                        <span class="text-sm font-medium text-indigo-800 dark:text-indigo-300 animate-pulse transition-colors">Menulis ulang kalimat Anda...</span>
+                    </div>
+                    
+                    <textarea id="outputText" class="w-full h-full p-4 resize-none outline-none text-slate-800 dark:text-slate-200 leading-relaxed text-base bg-transparent disabled:bg-slate-50 dark:disabled:bg-slate-900/20 transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-600" placeholder="Teks yang telah diparafrase akan muncul di sini. Kami menyusun ulang kalimat untuk menghindari repetisi dan meningkatkan kualitas tulisan Anda." readonly></textarea>
+                </div>
+                
+                <div class="bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-700 px-4 py-2 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400 transition-colors">
+                    <div>
+                        <span id="toneDisplay" class="font-medium text-slate-700 dark:text-slate-300 transition-colors">Academic</span> &bull; <span id="langDisplay">Auto Detect</span>
+                    </div>
+                    <div><span id="wordCountOut">0</span> Kata</div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Theme Toggle Logic
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const themeIconMoon = document.getElementById('themeIconMoon');
+        const themeIconSun = document.getElementById('themeIconSun');
+
+        // Set initial icon based on theme
+        if (document.documentElement.classList.contains('dark')) {
+            themeIconMoon.classList.add('hidden');
+            themeIconSun.classList.remove('hidden');
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+                themeIconMoon.classList.add('hidden');
+                themeIconSun.classList.remove('hidden');
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeIconSun.classList.add('hidden');
+                themeIconMoon.classList.remove('hidden');
+            }
+        });
+
+        // DOM Elements
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const toneSelect = document.getElementById('toneSelect');
+        const langSelect = document.getElementById('langSelect');
+        
+        const paraphraseBtn = document.getElementById('paraphraseBtn');
+        const btnText = document.getElementById('btnText');
+        const btnIconDefault = document.getElementById('btnIconDefault');
+        const btnIconLoading = document.getElementById('btnIconLoading');
+        
+        const clearBtn = document.getElementById('clearBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const copyIconDefault = document.getElementById('copyIconDefault');
+        const copyIconSuccess = document.getElementById('copyIconSuccess');
+        const copyText = document.getElementById('copyText');
+        
+        const wordCountIn = document.getElementById('wordCountIn');
+        const wordCountOut = document.getElementById('wordCountOut');
+        
+        const errorContainer = document.getElementById('errorContainer');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const toneDisplay = document.getElementById('toneDisplay');
+        const langDisplay = document.getElementById('langDisplay');
+
+        // Initial State
+        let isLoading = false;
+        paraphraseBtn.disabled = true;
+
+        // Utility: Count Words
+        const getWordCount = (text) => {
+            return text.trim() ? text.trim().split(/\s+/).length : 0;
+        };
+
+        // Event Listeners for Input
+        inputText.addEventListener('input', () => {
+            wordCountIn.textContent = getWordCount(inputText.value);
+            paraphraseBtn.disabled = inputText.value.trim() === '' || isLoading;
+            
+            // Hide error if typing
+            if(inputText.value.trim() !== '') {
+                errorContainer.classList.add('hidden');
+            }
+        });
+
+        // Event Listeners for Selects
+        toneSelect.addEventListener('change', () => {
+            toneDisplay.textContent = toneSelect.value;
+        });
+        
+        langSelect.addEventListener('change', () => {
+            langDisplay.textContent = langSelect.value;
+        });
+
+        // Clear Button
+        clearBtn.addEventListener('click', () => {
+            inputText.value = '';
+            outputText.value = '';
+            wordCountIn.textContent = '0';
+            wordCountOut.textContent = '0';
+            errorContainer.classList.add('hidden');
+            paraphraseBtn.disabled = true;
+            copyBtn.disabled = true;
+        });
+
+        // Copy Button
+        copyBtn.addEventListener('click', async () => {
+            if (!outputText.value) return;
+            
+            try {
+                await navigator.clipboard.writeText(outputText.value);
+            } catch (err) {
+                // Fallback
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText.value;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand("copy");
+                document.body.removeChild(textArea);
+            }
+            
+            // UI Update on Copy
+            copyIconDefault.classList.add('hidden');
+            copyIconSuccess.classList.remove('hidden');
+            copyText.textContent = 'Tersalin!';
+            
+            // Adjust classes for dark/light mode copy success state
+            copyBtn.classList.replace('bg-indigo-50', 'bg-green-100');
+            copyBtn.classList.replace('text-indigo-600', 'text-green-700');
+            copyBtn.classList.replace('hover:bg-indigo-100', 'hover:bg-green-200');
+            
+            copyBtn.classList.replace('dark:bg-indigo-900/30', 'dark:bg-green-900/30');
+            copyBtn.classList.replace('dark:text-indigo-400', 'dark:text-green-400');
+            copyBtn.classList.replace('dark:hover:bg-indigo-900/50', 'dark:hover:bg-green-900/50');
+
+            setTimeout(() => {
+                copyIconSuccess.classList.add('hidden');
+                copyIconDefault.classList.remove('hidden');
+                copyText.textContent = 'Salin Teks';
+                
+                // Revert classes back
+                copyBtn.classList.replace('bg-green-100', 'bg-indigo-50');
+                copyBtn.classList.replace('text-green-700', 'text-indigo-600');
+                copyBtn.classList.replace('hover:bg-green-200', 'hover:bg-indigo-100');
+                
+                copyBtn.classList.replace('dark:bg-green-900/30', 'dark:bg-indigo-900/30');
+                copyBtn.classList.replace('dark:text-green-400', 'dark:text-indigo-400');
+                copyBtn.classList.replace('dark:hover:bg-green-900/50', 'dark:hover:bg-indigo-900/50');
+            }, 2000);
+        });
+
+        // Gemini API Logic
+        const callGeminiAPI = async (promptText, systemInstruction) => {
+            // Sesuai instruksi sistem: gunakan apiKey kosong, sistem pratinjau akan menyuntikkan kunci saat dijalankan.
+            // Anda dapat menyematkan kunci pribadi Anda di sini "AQ.Ab8RN6IEQfShTej5eiWgGh43XxftJKInuAhYYY7t5wOGfsVjNg" jika dijalankan di luar platform ini.
+            const apiKey = "AQ.Ab8RN6IEQfShTej5eiWgGh43XxftJKInuAhYYY7t5wOGfsVjNg"; 
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: promptText }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] }
+            };
+
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            let lastError = null;
+
+            for (let attempt = 0; attempt <= 5; attempt++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(`HTTP error! status: ${response.status}. Detail: ${errData.error?.message || 'Unknown'}`);
+                    }
+
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                } catch (error) {
+                    lastError = error;
+                    if (attempt < 5) {
+                        await new Promise(resolve => setTimeout(resolve, delays[attempt]));
+                    }
+                }
+            }
+            throw lastError;
+        };
+
+        // UI State Manager for Loading
+        const setLoadingState = (loading) => {
+            isLoading = loading;
+            paraphraseBtn.disabled = loading || inputText.value.trim() === '';
+            copyBtn.disabled = loading || outputText.value.trim() === '';
+            
+            if (loading) {
+                btnText.textContent = 'Memproses...';
+                btnIconDefault.classList.add('hidden');
+                btnIconLoading.classList.remove('hidden');
+                loadingOverlay.classList.remove('hidden');
+            } else {
+                btnText.textContent = 'Parafrase Teks';
+                btnIconLoading.classList.add('hidden');
+                btnIconDefault.classList.remove('hidden');
+                loadingOverlay.classList.add('hidden');
+            }
+        };
+
+        const showError = (msg) => {
+            errorContainer.textContent = msg;
+            errorContainer.classList.remove('hidden');
+        };
+
+        // Main Action
+        paraphraseBtn.addEventListener('click', async () => {
+            const textToProcess = inputText.value.trim();
+            if (!textToProcess) return;
+
+            setLoadingState(true);
+            errorContainer.classList.add('hidden');
+            outputText.value = '';
+            wordCountOut.textContent = '0';
+
+            const toneDescriptions = {
+                'Academic': 'Objektif, formal, berbasis bukti, logis, sistematis. Sesuai standar jurnal ilmiah, tesis, disertasi, prosiding, dan buku akademik.',
+                'Professional': 'Jelas, efisien, kredibel, berorientasi solusi. Formal tetapi tidak kaku. Cocok untuk laporan, proposal, kebijakan, dan dokumen profesional.',
+                'Creative': 'Naratif, menarik, variatif. Menggunakan pendekatan persuasif dan deskriptif.',
+                'Formal': 'Bahasa baku, struktur resmi. Sesuai dokumen formal dan administrasi.',
+                'Simple': 'Mudah dipahami, kalimat sederhana, mengurangi kompleksitas bahasa.',
+                'Short': 'Ringkas, langsung ke inti, menghilangkan informasi yang berulang.',
+                'Expand': 'Mengembangkan ide, menambah penjelasan, memperkaya konteks. Menambah elaborasi tanpa mengubah substansi utama.'
+            };
+
+            const langDescriptions = {
+                'Auto Detect': 'Gunakan bahasa yang sama persis dengan teks asli (deteksi otomatis).',
+                'Indonesia': 'Bahasa Indonesia yang baik, benar, dan natural.',
+                'Inggris': 'Bahasa Inggris (English) dengan tata bahasa tingkat lanjut.'
+            };
+
+            const systemInstruction = `Anda bertindak sebagai Professor of Academic Writing, Editor Jurnal Internasional Bereputasi, Penulis Buku Referensi, Reviewer Scopus, Ahli Linguistik, dan Pakar NLP (Natural Language Processing) yang bertugas meningkatkan kualitas hasil parafrase dari aplikasi yang telah dibuat sebelumnya.
+Fokus utama Anda bukan sekadar mengganti kata dengan sinonim, melainkan menghasilkan tulisan yang memiliki karakteristik sebagai berikut:
+
+TUJUAN UTAMA
+Setiap teks yang diproses harus:
+1. Tetap mempertahankan makna, konteks, fakta, data, angka, istilah teknis, serta referensi asli.
+2. Menghasilkan tulisan yang terasa alami seperti ditulis manusia berpengalaman.
+3. Menghindari pola parafrase mekanis yang hanya mengganti beberapa kata.
+4. Memiliki alur berpikir yang logis dan koheren.
+5. Mengurangi kemiripan struktur kalimat dengan teks sumber hingga di bawah 5%.
+6. Meningkatkan kualitas keterbacaan (readability).
+7. Menghilangkan pola bahasa yang umum dihasilkan AI.
+8. Menghasilkan variasi struktur kalimat yang lebih kaya.
+9. Memiliki gaya penulisan sesuai kebutuhan pengguna.
+10. Tetap memenuhi standar akademik dan profesional.
+
+STRATEGI MUTLAK ANTI-TURNITIN (Similarity & AI Detection Bypass):
+1. Deep Structural Rewriting: DILARANG KERAS melakukan "Patchwriting" (hanya mengganti kata dengan sinonim pada posisi kalimat yang sama). Anda WAJIB mengubah total struktur pohon sintaksis (syntax tree) dari setiap kalimat dan paragraf.
+2. Clause Inversion & Part-of-Speech Shifting: Balik posisi klausa utama dan anak kalimat. Ubah kelas kata (misal: ubah kata benda menjadi frasa kerja, atau sifat menjadi keterangan).
+3. Burstiness & Perplexity: Gunakan tingkat "burstiness" (variasi panjang kalimat yang ekstrem, selang-seling antara kalimat sangat pendek dan majemuk panjang) dan "perplexity" (pilihan diksi akademis yang jarang diprediksi oleh algoritma).
+4. Aggressive Merging & Splitting: JANGAN pertahankan jumlah kalimat asli. Pecah 1 kalimat panjang menjadi 3 kalimat pendek, atau gabungkan 2 kalimat pendek menjadi 1 kalimat kompleks dengan relasi logika baru (misal menggunakan klausa subordinatif).
+5. Penghindaran Database: Untuk menghindari deteksi dari Student database, Internet content, dan Periodicals, definisikan ulang cara suatu ide disampaikan. Ubah sudut pandang penyampaian gagasan selama esensi fakta ilmiahnya 100% akurat.
+
+STRATEGI PARAFRASE YANG WAJIB DITERAPKAN
+1. Restrukturisasi Kalimat: Lakukan perubahan susunan subjek, predikat, objek, dan keterangan secara radikal.
+2. Variasi Pola Penulisan: Gunakan kombinasi kalimat aktif, pasif, deduktif, induktif, sebab-akibat, perbandingan.
+3. Human Writing Optimization: Kurangi penggunaan transisi generik AI (Selain itu, Di samping itu, Dengan demikian, Oleh karena itu, Perlu diketahui bahwa, Dapat disimpulkan bahwa). Gunakan transisi implisit yang natural.
+4. Semantic Preservation: Wajib mempertahankan data numerik, istilah teknis spesifik, dan makna utama.
+
+PILIHAN GAYA PENULISAN: Terapkan gaya sesuai dengan yang diminta oleh pengguna di bagian "Gaya:".
+
+MODE KHUSUS UNTUK NASKAH AKADEMIK:
+Gunakan struktur akademik manusiawi yang telah disunting dengan ketat.
+
+OUTPUT:
+Hanya tampilkan hasil parafrase. Jangan menjelaskan proses, strategi, analisis, atau memberikan salam/catatan.`;
+
+            const promptText = `PENTING: Lakukan perombakan struktur kalimat secara total (Deep Structural Rewriting) dan terapkan Burstiness tinggi agar lolos dari algoritma deteksi plagiarisme Turnitin (Student database, Internet content, Periodicals). DILARANG melakukan patchwriting.
+
+Rekomendasi Default: Academic + Professional + Humanized Writing + Anti-Turnitin Similarity Reduction + Readability Optimization
+
+Bahasa Output: ${langDescriptions[langSelect.value]}
+
+Teks Input:
+${textToProcess}
+
+Gaya:
+${toneSelect.value} (${toneDescriptions[toneSelect.value]})`;
+
+            try {
+                const result = await callGeminiAPI(promptText, systemInstruction);
+                outputText.value = result.trim();
+                wordCountOut.textContent = getWordCount(outputText.value);
+            } catch (error) {
+                console.error("Paraphrase Error:", error);
+                
+                let errorDisplay = 'Maaf, terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.';
+                
+                if (error.message.includes('400')) {
+                    errorDisplay = 'Error 400: Terjadi kesalahan format API atau otorisasi kunci. Jika Anda menjalankan secara lokal di luar platform ini, pastikan Anda telah mengisi konstanta `apiKey` di dalam kode HTML Anda.';
+                } else if (error.message.includes('403')) {
+                    errorDisplay = 'Error 403: Kunci API ditolak atau tidak valid. Silakan pastikan akun Anda memiliki kuota akses.';
+                } else if (error.message.includes('404')) {
+                    errorDisplay = 'Error 404: Model AI tidak ditemukan atau tidak didukung untuk wilayah Anda.';
+                }
+                
+                showError(errorDisplay);
+            } finally {
+                setLoadingState(false);
+            }
+        });
+    </script>
+</body>
+</html>
